@@ -772,6 +772,41 @@ static void test_ParseFailureIsOkay() {
     Tiny_DeleteState(state);
 }
 
+static void test_CannotAssignNull() {
+    Tiny_State *state = CreateState();
+
+    const char *code =
+        "x : int = null\n";
+
+    Tiny_CompileResult result =
+        Tiny_CompileString(state, "(cannot assign null to int)", code);
+
+    lequal(result.type, TINY_COMPILE_ERROR);
+
+    Tiny_DeleteState(state);
+}
+
+static void test_DisasmOne() {
+    Tiny_State* state = CreateState();
+
+    const char* code =
+        "x := 10 + 20\n";
+
+    Tiny_CompileResult result =
+        Tiny_CompileString(state, "(disasm)", code);
+
+    lequal(result.type, TINY_COMPILE_SUCCESS);
+
+    char buf[256];
+    int pc = 0;
+
+    Tiny_DisasmOne(state, &pc, buf, sizeof(buf));
+
+    lsequal(buf, "0 ((disasm):1)\tPUSH_INT 10");
+
+    Tiny_DeleteState(state);
+}
+
 #endif
 
 int main(int argc, char *argv[]) {
@@ -796,6 +831,8 @@ int main(int argc, char *argv[]) {
     lrun("Tiny Bind Nullable Types in Fn", test_BindNullable);
     lrun("Tiny Check Cannot Use Nullable", test_CannotUseNullable);
     lrun("Tiny Parse Failure is Ok", test_ParseFailureIsOkay);
+    lrun("Tiny Cannot Assign Null to Non-Nullable", test_CannotAssignNull);
+    lrun("Tiny Test DisasmOne", test_DisasmOne);
 
     lresults();
 #else
